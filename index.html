@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>논술 대학 추천기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--border:#e2e8f0;
+  --primary:#4f46e5;--primary-h:#4338ca;
+  --green:#16a34a;--red:#dc2626;--yellow:#d97706;--gray:#64748b;
+  --text:#1e293b;--muted:#64748b;
+  --radius:12px;--shadow:0 1px 4px rgba(0,0,0,.08),0 0 1px rgba(0,0,0,.06);
+  --shadow-h:0 6px 20px rgba(0,0,0,.12);
+}
+body{font-family:'Pretendard','Noto Sans KR','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.layout{display:grid;grid-template-columns:320px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+.sidebar-title{font-size:1.1rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
+.section-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.slider-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.slider-label{display:flex;justify-content:space-between;align-items:baseline}
+.slider-name{font-size:.88rem;font-weight:500}
+.slider-val{font-size:1rem;font-weight:700;color:var(--primary);min-width:36px;text-align:right}
+.slider-sub{font-size:.72rem;color:var(--muted)}
+input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:99px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;transition:.15s}
+input[type=range]::-webkit-slider-thumb:hover{background:var(--primary-h);transform:scale(1.15)}
+.grade-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.divider{border:none;border-top:1px solid var(--border);margin:4px 0}
+.result-count{font-size:.82rem;color:var(--muted);text-align:center;margin-top:auto;padding-top:12px}
+.num-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:1.3rem;font-weight:700;color:var(--primary);text-align:center;outline:none;background:var(--surface);transition:.15s}
+.num-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.num-input::-webkit-inner-spin-button{opacity:1;height:24px}
+/* Year select */
+.year-select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--text);cursor:pointer;outline:none}
+.year-select:focus{border-color:var(--primary)}
+/* Main */
+.main{padding:28px 24px}
+.main-header{margin-bottom:20px}
+.main-title{font-size:1.4rem;font-weight:800;letter-spacing:-.3px}
+.main-title em{font-style:normal;color:var(--primary)}
+.main-sub{font-size:.88rem;color:var(--muted);margin-top:4px}
+/* Grid */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-3px)}
+.card-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-name{font-size:1rem;font-weight:700;line-height:1.3}
+.badge{font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.badge-pass{background:#dcfce7;color:var(--green)}
+.badge-fail{background:#fee2e2;color:var(--red)}
+.badge-unknown{background:#f1f5f9;color:var(--gray)}
+.badge-none{background:#f1f5f9;color:var(--gray)}
+.card-body{padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:10px}
+.chance-row{display:flex;align-items:center;gap:8px}
+.chance-label{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.chance-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.chance-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),#818cf8);transition:width .4s}
+.chance-pct{font-size:.85rem;font-weight:700;color:var(--primary);min-width:38px;text-align:right}
+.info-row{font-size:.78rem;color:var(--muted);display:flex;gap:6px;line-height:1.5}
+.info-icon{flex-shrink:0;margin-top:1px}
+.info-text{flex:1}
+.warn-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;font-size:.75rem;color:#92400e;display:flex;gap:6px;align-items:flex-start}
+.trend-btn{margin-top:4px;padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:.78rem;font-weight:600;color:var(--primary);cursor:pointer;transition:.15s;width:100%}
+.trend-btn:hover{background:#ede9fe;border-color:var(--primary)}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);line-height:1.8}
+.empty code{display:block;margin:10px auto;padding:8px 16px;background:#f1f5f9;border-radius:6px;font-size:.85rem;width:fit-content}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-h);width:100%;max-width:640px;overflow:hidden}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:1rem;font-weight:700}
+.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px;line-height:1}
+.modal-close:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:20px}
+.chart-note{font-size:.75rem;color:var(--muted);text-align:center;margin-top:10px}
+.modal-stat{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 14px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;margin-bottom:14px;font-size:.82rem}
+.stat-pct{font-size:1.1rem;font-weight:800;color:var(--primary)}
+.stat-above{color:var(--red);font-weight:700}
+.stat-below{color:var(--green);font-weight:700}
+.stat-divider{color:var(--border);user-select:none}
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;gap:12px;padding:60px;color:var(--muted);font-size:.9rem}
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto}
+  .card-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:580px){
+  .card-grid{grid-template-columns:1fr}
+  .main{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- 사이드바 -->
+<aside class="sidebar">
+  <div class="sidebar-title">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    논술 대학 추천기
+  </div>
+
+  <div>
+    <div class="section-label">연도</div>
+    <select class="year-select" id="year-select" onchange="onYearChange(this.value)">
+      <option value="all">전체</option>
+    </select>
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">수능 백분위</div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span class="slider-name">수학 백분위</span>
+        <span class="slider-sub" style="margin:0">0 – 100</span>
+      </div>
+      <input type="number" id="sl-math" class="num-input" min="0" max="100" value="80" placeholder="0~100">
+      <span class="slider-sub">합격 가능성 산출 기준</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">수능 등급 <span style="font-weight:400;text-transform:none">(수능최저 충족 여부)</span></div>
+    <div class="grade-grid">
+      <div class="slider-row">
+        <div class="slider-label">
+          <span class="slider-name">국어</span>
+          <span class="slider-val" id="val-korean">3</span>
+        </div>
+        <input type="range" id="sl-korean" min="1" max="9" value="3">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">
+          <span class="slider-name">수학</span>
+          <span class="slider-val" id="val-mathg">3</span>
+        </div>
+        <input type="range" id="sl-mathg" min="1" max="9" value="3">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">
+          <span class="slider-name">영어</span>
+          <span class="slider-val" id="val-eng">3</span>
+        </div>
+        <input type="range" id="sl-eng" min="1" max="9" value="3">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">
+          <span class="slider-name">탐구</span>
+          <span class="slider-val" id="val-sci">3</span>
+        </div>
+        <input type="range" id="sl-sci" min="1" max="9" value="3">
+      </div>
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:-4px">1등급이 가장 좋은 등급입니다</p>
+  </div>
+
+  <div class="result-count" id="result-count"></div>
+</aside>
+
+<!-- 메인 -->
+<main class="main">
+  <div class="main-header">
+    <h1 class="main-title">논술 <em>대학 추천</em> <span style="font-size:.75rem;font-weight:500;color:var(--muted)">feat. 향일고 김기정</span></h1>
+    <p class="main-sub">수학 백분위 기준 합격 가능성 높은 순으로 정렬됩니다</p>
+  </div>
+  <div class="card-grid" id="card-grid">
+    <div class="loading">데이터를 불러오는 중...</div>
+  </div>
+</main>
+</div>
+
+<!-- 추이 모달 -->
+<div class="modal-overlay" id="trend-modal" onclick="handleModalClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">연도별 합격선 추이</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-stat"></div>
+      <canvas id="trend-chart" height="200"></canvas>
+      <p class="chart-note">합격자 수학 백분위 구간별 비율 · 연도별 raw.csv 추가 시 자동 반영</p>
+    </div>
+  </div>
+</div>
+
+<!-- data.js: raw.csv 를 JS 변수로 임베드 (generate-data.bat 으로 생성) -->
+<script src="data.js"></script>
+<!-- PapaParse: 따옴표·줄바꿈 포함 CSV 파싱 -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+<!-- Chart.js + 어노테이션 플러그인 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
+
+<script>
+// ── 상수 ────────────────────────────────────────────────────────────────────
+const UNI_ORDER = [
+  '가톨릭대','건국대','경희대','고려대','광운대','단국대','덕성여대','동국대',
+  '동덕여대','서강대','서울과기대','서울시립대','성균관대','성신여대','세종대',
+  '숙명여대','숭실대','아주대','연세대','이화여대','인하대','중앙대',
+  '중앙대(다빈치)','한양대','항공대','홍익대'
+];
+
+// ── 상태 ────────────────────────────────────────────────────────────────────
+// ALL_DATA: { year(number) -> { uniName -> { name, scores, nonsul, minScore } } }
+let ALL_DATA = {};
+let selectedYear = 'all';
+let trendChart = null;
+let currentModalUni = null;
+
+// ── CSV 파싱 ─────────────────────────────────────────────────────────────────
+// CSV 컬럼 구조 (year 추가 후):
+//   0       : year
+//   1..52   : uni_0_pct, uni_0_cnt, uni_1_pct, uni_1_cnt, ... (26대학×2=52)
+//   53      : (빈 열)
+//   54      : 학교명
+//   55      : 논술유형
+//   56      : 수능최저
+function parseCSV(rows) {
+  const map = {};
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row || row.length < 2) continue;
+
+    const year = parseInt(row[0], 10);
+    if (isNaN(year)) continue;
+
+    if (!map[year]) {
+      map[year] = {};
+      UNI_ORDER.forEach(name => {
+        map[year][name] = { name, scores: [], nonsul: '', minScore: '' };
+      });
+    }
+
+    // 점수 페어 추출
+    for (let i = 0; i < UNI_ORDER.length; i++) {
+      const pctStr = (row[1 + i * 2] || '').trim();
+      const cntStr = (row[2 + i * 2] || '').trim();
+      const pct = parseInt(pctStr, 10);
+      const cnt = parseInt(cntStr, 10);
+      if (pctStr && cntStr && !isNaN(pct) && !isNaN(cnt)) {
+        map[year][UNI_ORDER[i]].scores.push([pct, cnt]);
+      }
+    }
+
+    // 메타데이터 (학교명이 있는 행에만 기록)
+    const school  = (row[54] || '').trim();
+    const nonsul  = (row[55] || '').trim();
+    const minScore = (row[56] || '').trim();
+    if (school && map[year][school]) {
+      map[year][school].nonsul   = nonsul;
+      map[year][school].minScore = minScore;
+    }
+  }
+
+  return map;
+}
+
+// ── 활성 데이터 ──────────────────────────────────────────────────────────────
+function getActiveData() {
+  if (selectedYear === 'all') {
+    const merged = {};
+    const sortedYears = Object.keys(ALL_DATA).map(Number).sort();
+    for (const yr of sortedYears) {
+      for (const [name, uni] of Object.entries(ALL_DATA[yr])) {
+        if (!merged[name]) {
+          merged[name] = { name, scores: [], nonsul: '', minScore: '' };
+        }
+        merged[name].scores.push(...uni.scores);
+        if (uni.nonsul)   merged[name].nonsul   = uni.nonsul;
+        if (uni.minScore) merged[name].minScore = uni.minScore;
+      }
+    }
+    return Object.values(merged);
+  }
+  const yd = ALL_DATA[selectedYear];
+  return yd ? Object.values(yd) : [];
+}
+
+// ── 합격 가능성 계산 ──────────────────────────────────────────────────────────
+function calcChance(scores, userPct) {
+  if (!scores || scores.length === 0) return 0;
+  let passed = 0, total = 0;
+  for (const [pct, cnt] of scores) {
+    total += cnt;
+    if (pct <= userPct) passed += cnt;
+  }
+  return total === 0 ? 0 : Math.round(passed / total * 100);
+}
+
+// ── 백분위 구간 정의 ─────────────────────────────────────────────────────────
+const BRACKETS = [
+  { label: '95~', min: 95, max: 100 },
+  { label: '90~', min: 90, max: 94  },
+  { label: '85~', min: 85, max: 89  },
+  { label: '80~', min: 80, max: 84  },
+  { label: '75~', min: 75, max: 79  },
+  { label: '70~', min: 70, max: 74  },
+  { label: '65~', min: 65, max: 69  },
+  { label: '60~', min: 60, max: 64  },
+  { label: '~59', min: 0,  max: 59  },
+];
+
+const YEAR_COLORS = [
+  { bg: 'rgba(79,70,229,0.75)',  border: '#4f46e5' },
+  { bg: 'rgba(16,163,74,0.75)',  border: '#10a34a' },
+  { bg: 'rgba(220,38,38,0.75)',  border: '#dc2626' },
+  { bg: 'rgba(217,119,6,0.75)', border: '#d97706' },
+];
+
+function calcDistribution(scores) {
+  const total = scores.reduce((s, [, c]) => s + c, 0);
+  if (!total) return null;
+  return BRACKETS.map(({ min, max }) => {
+    const cnt = scores
+      .filter(([p]) => p >= min && p <= max)
+      .reduce((s, [, c]) => s + c, 0);
+    return +(cnt / total * 100).toFixed(1);
+  });
+}
+
+// ── 수능최저 파싱 ─────────────────────────────────────────────────────────────
+function checkMinScore(raw, g) {
+  if (!raw) return { status: 'none', badge: '최저 없음' };
+  const text = raw.replace(/\r/g, '');
+  if (text.includes('없음')) return { status: 'none', badge: '최저 없음' };
+
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  // 약학·의예 등 특수 학과 최저는 판정에서 제외
+  const special = /의예|의학|약학|치의|한의|수의|체육|스크랜튼|경찰/;
+  const mainLine = lines.find(l => !special.test(l));
+  // 일반 자연계 최저가 없는 학교(모든 줄이 특수학과)는 최저 없음으로 처리
+  if (!mainLine) return { status: 'none', badge: '최저 없음' };
+
+  const m = mainLine.match(/(\d)개 합 (\d+)/);
+  if (!m) return { status: 'unknown', badge: '확인 필요', detail: mainLine };
+
+  const N = +m[1], M = +m[2];
+  const sorted = [g.korean, g.math, g.english, g.science].sort((a, b) => a - b);
+  const sum = sorted.slice(0, N).reduce((s, v) => s + v, 0);
+  const pass = sum <= M;
+
+  return {
+    status: pass ? 'pass' : 'fail',
+    badge:  pass ? '최저 충족' : '최저 불충족',
+    detail: `상위 ${N}개 합산 ${sum}<br>(기준 ≤${M})`,
+    warn:   !pass,
+  };
+}
+
+// ── 슬라이더 ─────────────────────────────────────────────────────────────────
+function getInputs() {
+  return {
+    mathPct:  +document.getElementById('sl-math').value,
+    korean:   +document.getElementById('sl-korean').value,
+    math:     +document.getElementById('sl-mathg').value,
+    english:  +document.getElementById('sl-eng').value,
+    science:  +document.getElementById('sl-sci').value,
+  };
+}
+
+function bindSlider(id, valId) {
+  const sl = document.getElementById(id);
+  const vl = document.getElementById(valId);
+  vl.textContent = sl.value;
+  sl.addEventListener('input', () => {
+    vl.textContent = sl.value;
+    render();
+    // 수학 백분위 슬라이더 변경 시 모달이 열려 있으면 차트도 갱신
+    if (id === 'sl-math' && currentModalUni) showTrend(currentModalUni);
+  });
+}
+
+// ── 카드 렌더링 ───────────────────────────────────────────────────────────────
+function render() {
+  const inp  = getInputs();
+  const data = getActiveData();
+  const grid = document.getElementById('card-grid');
+
+  const scored = data
+    .map(u => ({ ...u, chance: calcChance(u.scores, inp.mathPct), min: checkMinScore(u.minScore, inp) }))
+    .sort((a, b) => b.chance - a.chance);
+
+  document.getElementById('result-count').textContent = `총 ${scored.length}개 대학`;
+
+  if (scored.length === 0) {
+    grid.innerHTML = '<div class="empty">조건에 맞는 대학이 없습니다.</div>';
+    return;
+  }
+
+  const badgeMap = { pass:'badge-pass', fail:'badge-fail', unknown:'badge-unknown', none:'badge-none' };
+
+  grid.innerHTML = scored.map(u => {
+    const badgeClass   = badgeMap[u.min.status] || 'badge-unknown';
+    const nonsulText   = u.nonsul   || '-';
+    const minScoreText = u.minScore ? u.minScore.replace(/\n/g, '<br>') : '없음';
+    const warnHtml     = u.min.warn
+      ? `<div class="warn-box">
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px">
+             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+             <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+           </svg>
+           <span>수능최저 불충족 (${u.min.detail})</span>
+         </div>`
+      : '';
+
+    const nameSafe = u.name.replace(/'/g, "\\'");
+
+    return `<div class="card">
+      <div class="card-header">
+        <div class="card-name">${u.name}</div>
+        <span class="badge ${badgeClass}">${u.min.badge}</span>
+      </div>
+      <div class="card-body">
+        <div class="chance-row">
+          <span class="chance-label">합격 가능성</span>
+          <div class="chance-bar-wrap">
+            <div class="chance-bar" style="width:${u.chance}%"></div>
+          </div>
+          <span class="chance-pct">${u.chance}%</span>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </span>
+          <span class="info-text"><b>논술 범위</b> ${nonsulText}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <span class="info-text"><b>수능최저</b> ${minScoreText}</span>
+        </div>
+        ${warnHtml}
+        <button class="trend-btn" onclick="showTrend('${nameSafe}')">📊 백분위 분포 보기</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 연도 필터 ─────────────────────────────────────────────────────────────────
+function onYearChange(val) {
+  selectedYear = val === 'all' ? 'all' : parseInt(val, 10);
+  render();
+}
+
+function renderYearFilter(years) {
+  const sel = document.getElementById('year-select');
+  sel.innerHTML = `<option value="all">전체</option>` +
+    years.map(y => `<option value="${y}">${y}년도</option>`).join('');
+  // 단일 연도면 해당 연도를 기본 선택
+  if (years.length === 1) {
+    selectedYear = years[0];
+    sel.value = String(years[0]);
+  }
+}
+
+// ── 백분위 분포 그래프 ────────────────────────────────────────────────────────
+function showTrend(uniName) {
+  currentModalUni = uniName;
+  const userPct = +document.getElementById('sl-math').value;
+  const years   = Object.keys(ALL_DATA).map(Number).sort();
+
+  document.getElementById('modal-title').textContent = `${uniName} 합격자 수학 백분위 분포`;
+  document.getElementById('trend-modal').style.display = 'flex';
+
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+
+  // ① 연도별 막대 데이터셋
+  const datasets = years.map((yr, i) => {
+    const scores = ALL_DATA[yr]?.[uniName]?.scores || [];
+    const dist   = calcDistribution(scores) || new Array(BRACKETS.length).fill(0);
+    const col    = YEAR_COLORS[i % YEAR_COLORS.length];
+    return { label: `${yr}년도`, data: dist,
+             backgroundColor: col.bg, borderColor: col.border,
+             borderWidth: 1, borderRadius: 4 };
+  });
+
+  // ② 전체 합산으로 내 위치 비율 계산
+  const allScores = years.flatMap(yr => ALL_DATA[yr]?.[uniName]?.scores || []);
+  const total     = allScores.reduce((s, [, c]) => s + c, 0);
+  const aboveCnt  = allScores.filter(([p]) => p > userPct).reduce((s, [, c]) => s + c, 0);
+  const abovePct  = total ? +(aboveCnt / total * 100).toFixed(1) : null;
+  const belowPct  = abovePct !== null ? +(100 - abovePct).toFixed(1) : null;
+
+  // ③ 통계 표시 업데이트
+  const statEl = document.getElementById('modal-stat');
+  if (abovePct !== null) {
+    statEl.className = 'modal-stat';
+    statEl.innerHTML =
+      `<span>내 수학 백분위 <span class="stat-pct">${userPct}</span></span>` +
+      `<span class="stat-divider">|</span>` +
+      `<span>합격자 중 <span class="stat-above">▲${abovePct}%</span>가 내 점수보다 높음</span>` +
+      `<span class="stat-divider">|</span>` +
+      `<span>내 점수 이하 합격 <span class="stat-below">${belowPct}%</span></span>`;
+  } else {
+    statEl.innerHTML = '';
+  }
+
+  // ④ 내 위치 수직선 어노테이션
+  const userBracket = BRACKETS.find(b => userPct >= b.min && userPct <= b.max);
+  const annotations = {};
+  if (userBracket) {
+    annotations.userLine = {
+      type: 'line',
+      scaleID: 'x',
+      value: userBracket.label,
+      borderColor: '#dc2626',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      label: {
+        content: `내 위치 (${userPct})`,
+        display: true,
+        backgroundColor: '#dc2626',
+        color: '#fff',
+        font: { size: 11, weight: '600' },
+        position: 'end',
+        yAdjust: 6,
+      }
+    };
+  }
+
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: BRACKETS.map(b => b.label), datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: years.length > 1 },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}%` } },
+        annotation: { annotations },
+      },
+      scales: {
+        x: { title: { display: true, text: '수학 백분위 구간' } },
+        y: {
+          min: 0, suggestedMax: 80,
+          title: { display: true, text: '합격자 비율 (%)' },
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById('trend-modal').style.display = 'none';
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+  currentModalUni = null;
+}
+
+function handleModalClick(e) {
+  if (e.target === e.currentTarget) closeModal();
+}
+
+// ── CSV 로드 ──────────────────────────────────────────────────────────────────
+// 우선순위: 1) data.js 임베드 변수  2) fetch (HTTP 서버 환경)
+function parseCsvText(text) {
+  return new Promise(resolve => {
+    Papa.parse(text, {
+      header: false,
+      skipEmptyLines: false,
+      complete: result => {
+        ALL_DATA = parseCSV(result.data);
+        const years = Object.keys(ALL_DATA).map(Number).sort();
+        renderYearFilter(years);
+        render();
+        resolve();
+      }
+    });
+  });
+}
+
+async function loadCSV() {
+  const grid = document.getElementById('card-grid');
+
+  // data.js 가 로드돼 있으면 서버 없이 바로 사용
+  if (typeof window.RAW_CSV_DATA === 'string') {
+    await parseCsvText(window.RAW_CSV_DATA);
+    return;
+  }
+
+  // HTTP 서버 환경: fetch 시도
+  try {
+    const res = await fetch('raw.csv');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await parseCsvText(await res.text());
+  } catch (e) {
+    console.error('CSV 로드 실패:', e);
+    grid.innerHTML = `<div class="empty">
+      <p>⚠️ 데이터를 불러올 수 없습니다.</p>
+      <p><b>generate-data.bat</b> 을 더블클릭해 data.js 를 생성한 뒤<br>index.html 을 다시 여세요.</p>
+    </div>`;
+  }
+}
+
+// ── 초기화 ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // 수학 백분위: 숫자 직접 입력
+  const slMath = document.getElementById('sl-math');
+  slMath.addEventListener('input', () => {
+    let v = Math.min(100, Math.max(0, parseInt(slMath.value) || 0));
+    slMath.value = v;
+    render();
+    if (currentModalUni) showTrend(currentModalUni);
+  });
+  bindSlider('sl-korean', 'val-korean');
+  bindSlider('sl-mathg',  'val-mathg');
+  bindSlider('sl-eng',    'val-eng');
+  bindSlider('sl-sci',    'val-sci');
+  loadCSV();
+});
+</script>
+</body>
+</html>
