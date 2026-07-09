@@ -41,11 +41,32 @@ input[type=range]::-webkit-slider-thumb:hover{background:var(--primary-h);transf
 .main-title{font-size:1.4rem;font-weight:800;letter-spacing:-.3px}
 .main-title em{font-style:normal;color:var(--primary)}
 .main-sub{font-size:.88rem;color:var(--muted);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--muted);font-weight:500}
+.legend-item i{width:12px;height:12px;border-radius:3px;display:inline-block;flex-shrink:0}
 /* Grid */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
 /* Card */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.card{background:var(--surface);border:1px solid var(--border);border-left-width:5px;border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s,transform .2s}
 .card:hover{box-shadow:var(--shadow-h);transform:translateY(-3px)}
+/* 합격 가능성 구간별 카드 색상 */
+.card.tier-high{border-left-color:#16a34a}
+.card.tier-good{border-left-color:#2563eb}
+.card.tier-mid{border-left-color:#d97706}
+.card.tier-low{border-left-color:#dc2626}
+.card.tier-none{border-left-color:#cbd5e1}
+.tier-high .card-header{background:#f0fdf4}
+.tier-good .card-header{background:#eff6ff}
+.tier-mid .card-header{background:#fffbeb}
+.tier-low .card-header{background:#fef2f2}
+.tier-high .chance-bar{background:linear-gradient(90deg,#16a34a,#4ade80)}
+.tier-good .chance-bar{background:linear-gradient(90deg,#2563eb,#60a5fa)}
+.tier-mid .chance-bar{background:linear-gradient(90deg,#d97706,#fbbf24)}
+.tier-low .chance-bar{background:linear-gradient(90deg,#dc2626,#f87171)}
+.tier-high .chance-pct{color:#16a34a}
+.tier-good .chance-pct{color:#2563eb}
+.tier-mid .chance-pct{color:#d97706}
+.tier-low .chance-pct{color:#dc2626}
 .card-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .card-name{font-size:1rem;font-weight:700;line-height:1.3}
 .card-badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;align-items:center}
@@ -209,6 +230,13 @@ input[type=range]::-webkit-slider-thumb:hover{background:var(--primary-h);transf
   <div class="main-header">
     <h1 class="main-title">논술 <em>대학 추천</em> <span style="font-size:.75rem;font-weight:500;color:var(--muted)">feat. 향일고 김기정</span></h1>
     <p class="main-sub">합격 통계 데이터가 있는 대학은 합격 가능성 높은 순으로 정렬됩니다</p>
+    <div class="legend">
+      <span class="legend-item"><i style="background:#16a34a"></i>안정 80%+</span>
+      <span class="legend-item"><i style="background:#2563eb"></i>적정 60~79%</span>
+      <span class="legend-item"><i style="background:#d97706"></i>소신 40~59%</span>
+      <span class="legend-item"><i style="background:#dc2626"></i>도전 ~39%</span>
+      <span class="legend-item"><i style="background:#cbd5e1"></i>데이터 없음</span>
+    </div>
   </div>
   <div class="card-grid" id="card-grid">
     <div class="loading">데이터를 불러오는 중...</div>
@@ -391,6 +419,15 @@ function escAttr(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+// ── 합격 가능성 구간 → 카드 색상 티어 ─────────────────────────────────────────
+function chanceTier(chance) {
+  if (chance < 0)   return 'tier-none';   // 데이터 없음
+  if (chance >= 80) return 'tier-high';   // 안정
+  if (chance >= 60) return 'tier-good';   // 적정
+  if (chance >= 40) return 'tier-mid';    // 소신
+  return 'tier-low';                       // 도전
+}
+
 // ── 카드 렌더링 ───────────────────────────────────────────────────────────────
 function render() {
   if (!window.INFO_DATA) return;
@@ -501,7 +538,7 @@ function render() {
       ? `<button class="trend-btn" data-raw="${escAttr(u.rawName)}" data-display="${escAttr(u.infoName)}">📊 백분위 분포 보기</button>`
       : '';
 
-    return `<div class="card">
+    return `<div class="card ${chanceTier(u.chance)}">
       <div class="card-header">
         <div class="card-name">${u.infoName}</div>
         <div class="card-badges">
