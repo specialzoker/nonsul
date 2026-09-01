@@ -259,9 +259,10 @@ input[type=range]::-webkit-slider-thumb:hover{background:var(--primary-h);transf
   </div>
 </div>
 
-<!-- data.js: raw.csv 임베드 (합격 통계), info.js: data.xlsx 임베드 (대학 정보) -->
+<!-- data.js: raw.csv 임베드 (합격 통계), info.js: data.xlsx 임베드 (대학 정보), scores.js: scores.xlsx 임베드 (학과별 논술점수) -->
 <script src="data.js"></script>
 <script src="info.js"></script>
+<script src="scores.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
@@ -428,6 +429,29 @@ function chanceTier(chance) {
   return 'tier-low';                       // 도전
 }
 
+// ── 학과별 논술점수 섹션 (scores.js) ──────────────────────────────────────────
+function scoreSection(infoName) {
+  const list = window.SCORE_DATA && window.SCORE_DATA[infoName];
+  if (!list || list.length === 0) return '';
+  const hasConv = list.some(([, , c]) => c != null);
+  const rows = list.map(([dept, raw, conv], i) => `<tr>
+      <td style="color:var(--muted);text-align:right">${i + 1}</td>
+      <td>${(dept || '').replace(/\n/g, ' ')}</td>
+      <td style="text-align:right;font-weight:600">${raw}</td>
+      ${hasConv ? `<td style="text-align:right;color:var(--muted)">${conv != null ? conv : '-'}</td>` : ''}
+    </tr>`).join('');
+  return `<details class="dept-details">
+      <summary>학과별 논술점수 (${list.length}개 · 실채점)</summary>
+      <div class="dept-table-wrap">
+        <table class="dept-table">
+          <thead><tr><th style="text-align:right">순위</th><th>학과</th><th style="text-align:right">논술점수</th>${hasConv ? '<th style="text-align:right">100점 환산</th>' : ''}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <p class="check-detail" style="margin-top:4px">※ 논술점수는 대학별 채점 기준이 달라 <b>같은 대학 안 학과 간 비교</b>용입니다 (대학 간 비교 X).</p>
+    </details>`;
+}
+
 // ── 카드 렌더링 ───────────────────────────────────────────────────────────────
 function render() {
   if (!window.INFO_DATA) return;
@@ -566,6 +590,7 @@ function render() {
             </table>
           </div>
         </details>
+        ${scoreSection(u.infoName)}
         ${warnHtml}
         ${trendBtn}
       </div>
